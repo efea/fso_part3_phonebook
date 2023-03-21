@@ -27,7 +27,21 @@ let persons = [
   },
 ];
 
-app.use(morgan('tiny'))
+//app.use(morgan('tiny'))
+morgan.token('content', function (req, res) { 
+     if(req.method === "POST"){
+        const reqBody = JSON.stringify(req.body)
+        return reqBody
+     }
+     else{
+        return ""
+     }
+})
+// method / route / status / request cont. length / response time / content of req
+
+app.use(morgan(
+    ':method :url :status :req[content-length] - :response-time ms :content'
+))
 
 app.get("/api/persons", (request, response) => {
   console.log("getting all the persons..");
