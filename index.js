@@ -1,8 +1,18 @@
+/*
+ * Don't forget to add MONGODB_URI to the Render..
+ * Environment -> Environment Variables Key-Value..
+ * 
+ * 
+ */
+//it is important that .env gets important before the person model
+//this ensures environment variables from the .env are available globally 
+//before the code from other modules is imported.
+require('dotenv').config()
 const express = require("express");
 const app = express();
 const morgan = require('morgan')
 const cors = require('cors')
-
+const Person = require('./models/person')
 
 app.use(express.json());
 app.use(cors())
@@ -49,9 +59,10 @@ app.use(morgan(
 ))
 
 app.get("/api/persons", (request, response) => {
-  console.log("getting all the persons..");
-  response.json(persons);
-});
+  Person.find({}).then(persons => {
+    response.json(persons)
+  })
+})
 
 app.get("/info", (request, response) => {
     const arrayInfo = persons.length
@@ -68,7 +79,11 @@ app.get("/info", (request, response) => {
 app.get("/api/persons/:id", (request, response) => {
 
     console.log("getting a single person..")
-    const id = Number(request.params.id);
+    Person.findById(request.params.id).then((person => {
+        response.json(person)
+      })
+    )
+    /*const id = Number(request.params.id);
     const person = persons.find((person) => person.id === id)
   
     if(person){
@@ -79,7 +94,7 @@ app.get("/api/persons/:id", (request, response) => {
     else
     {
         response.status(404).end()
-    }
+    }*/
   })
 
 app.delete("/api/persons/:id", (request, response) => {
@@ -98,8 +113,25 @@ const generateId = () => {
 app.post("/api/persons", (request, response) => {
     console.log("adding a person..")
     const body = request.body;
+
+    if (body.name === undefined) {
+      return response.status(400).json({ error: 'name missing' })
+    }
+
+    if (body.number === undefined) {
+      return response.status(400).json({ error: 'numbef missing' })
+    }
   
-    if(!body.name){
+    const newPerson = new Person({
+      name: body.name,
+      number: body.number
+    })
+  
+    newPerson.save().then(savedPerson => {
+      response.json(savedPerson)
+    })
+  
+    /*if(!body.name){
         console.log("name missing")
         return response.status(400).json({ 
             error: 'name missing' 
@@ -130,13 +162,13 @@ app.post("/api/persons", (request, response) => {
     };
   
     persons = persons.concat(person);
-    response.json(person);
+    response.json(person);*/
   })
   
 
 
 
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT
 app.listen(PORT, () => {
 console.log(`Server running on port ${PORT}`);
 });
